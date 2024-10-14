@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:librolandia_001/ui/pages/book/crud_book.dart';
 import 'package:librolandia_001/ui/pages/users/crud_users.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -22,9 +23,11 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
       routes: {
-        '/': (context) => const CrudUsers(),
+        '/': (context) => const CrudBook(),
         // '/': (context) => const UsersView(),
         '/crud_users': (context) => const CrudUsers(),
+        '/crud_book': (context) => const CrudBook(),
+
         
         
         },
