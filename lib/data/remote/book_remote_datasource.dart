@@ -4,7 +4,7 @@ import 'package:librolandia_001/data/model/books_model.dart';
 abstract class BookRemoteDataSource {
   Future<List<BookModel>> getBook();
   Future<void> addBook(BookModel bookModel);
-  Future<void> updateBook(String id, BookModel updateBook);
+  Future<void> updateBook(BookModel updateBook);
   Future<void> deleteBook(String id);
 
 }
@@ -35,27 +35,11 @@ class BookRemoteDataSourceImpl extends BookRemoteDataSource {
     bookFirestoreRef.add(bookModel);
   }
   
-   @override
-  Future<void> updateBook(String id, BookModel updateBook) async {
-    final docUser = FirebaseFirestore.instance
-      .collection("Person")
-      .doc(id); 
-    docUser.update({
-      'tittle': updateBook.tittle,
-      'autor': updateBook.autor,
-      'editorial': updateBook.editorial,
-      'gender': updateBook.gender,
-      'price': updateBook.price,
-      'stock': updateBook.stock,
-      'description': updateBook.description,
-      'id': updateBook.id,
-      'year': updateBook.year,
-      'language': updateBook.language,
-      'format': updateBook.format,
-      'registerdate': updateBook.registerdate.toIso8601String(),
-      'status': updateBook.status,
-      'updatedate': updateBook.updatedate.toIso8601String(),
-    });
+  
+  @override
+  Future<void> updateBook(BookModel bookModel) async {
+    // Utilizamos el método `set` para actualizar un documento existente en Firestore
+    await bookFirestoreRef.doc(bookModel.id).update(bookModel.toJson());
   }
 
  @override

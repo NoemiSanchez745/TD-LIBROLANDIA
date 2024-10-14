@@ -2,7 +2,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:librolandia_001/data/model/books_model.dart';
-import 'package:librolandia_001/data/model/ejemplolibros.dart';
 import 'package:librolandia_001/data/remote/book_remote_datasource.dart';
 import 'package:librolandia_001/ui/pages/Footer/footer.dart';
 import 'package:librolandia_001/ui/pages/Header/header.dart';
@@ -33,8 +32,9 @@ class _MyAppState extends State<CrudBook> {
   bool isLoading = true;
   List<BookModel> books = [];
   final bookRemoteDataSource = BookRemoteDataSourceImpl();
-  bool isPriceValid = true; // Variable para rastrear si el precio es válido
-  String? priceErrorMessage; // Variable para almacenar el mensaje de error
+
+  bool isEditing = false; // Controla si se está editando un libro
+  String? editingBookId; // ID del libro que se está editando
 
   @override
   void initState() {
@@ -44,54 +44,30 @@ class _MyAppState extends State<CrudBook> {
 
   Future<void> registerBook() async {
     try {
-      // Crear un nuevo modelo de libro usando los datos del formulario
       final newBook = BookModel(
-        id: '', // Firebase generará el ID automáticamente
+        id: '',
         tittle: _tittleController.text,
         autor: _authorController.text,
         editorial: _editorialController.text,
         gender: _generController.text,
-        price: double.parse(_priceController
-            .text), // Asegúrate de que el campo tenga un valor numérico
+        price: double.parse(_priceController.text),
         stock: int.parse(_stockController.text),
-        description: _descriptionController
-            .text, // Si tienes otro controlador para descripción, cámbialo
-        year: int.parse(
-            _yearController.text), // Cambia el controlador si es necesario
-        language:
-            _languageController.text, // Cambia el controlador si es necesario
+        description: _descriptionController.text,
+        year: int.parse(_yearController.text),
+        language: _languageController.text,
         format: _selectedOption,
         registerdate: DateTime.now(),
-        status: 1, // O el estado que quieras darle por defecto
+        status: 1,
         updatedate: DateTime.now(),
       );
 
-      // Llamar al método de datasource para agregar el libro
       await bookRemoteDataSource.addBook(newBook);
 
-      // Mostrar mensaje de éxito y limpiar los campos
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Libro registrado exitosamente')),
       );
-      formKey.currentState?.reset(); // Limpiar formulario
-      // Limpiar el campo de precio
-      _priceController.clear();
-      _tittleController.clear();
-      _authorController.clear();
-      _editorialController.clear();
-      _descriptionController.clear();
-      _languageController.clear();
-      _priceController.clear();
-      _stockController.clear();
-      _yearController.clear();
-      _generController.clear;
-      _selectedOption = 'Ingrese formato';
-      _generController.clear();
-
-      // Actualizar la tabla de libros
-      setState(() {
-        loadBooks(); // Llamar a la función para recargar los libros y actualizar la tabla
-      });
+      _clearFields();
+      loadBooks();
     } catch (e) {
       print('Error al registrar el libro: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -100,10 +76,50 @@ class _MyAppState extends State<CrudBook> {
     }
   }
 
+  Future<void> updateBook() async {
+    if (editingBookId != null) {
+      try {
+        final updatedBook = BookModel(
+          id: editingBookId!,
+          tittle: _tittleController.text,
+          autor: _authorController.text,
+          editorial: _editorialController.text,
+          gender: _generController.text,
+          price: double.parse(_priceController.text),
+          stock: int.parse(_stockController.text),
+          description: _descriptionController.text,
+          year: int.parse(_yearController.text),
+          language: _languageController.text,
+          format: _selectedOption,
+          registerdate: DateTime.now(),
+          status: 1,
+          updatedate: DateTime.now(),
+        );
+
+        await bookRemoteDataSource.updateBook(updatedBook);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Libro actualizado exitosamente')),
+        );
+
+        _clearFields();
+        loadBooks();
+        setState(() {
+          isEditing = false;
+          editingBookId = null;
+        });
+      } catch (e) {
+        print('Error al actualizar el libro: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al actualizar el libro: $e')),
+        );
+      }
+    }
+  }
+
   Future<void> loadBooks() async {
     try {
       final loadedBooks = await bookRemoteDataSource.getBook();
-      print('Books loaded: ${loadedBooks.length}');
       setState(() {
         books = loadedBooks;
         isLoading = false;
@@ -116,69 +132,91 @@ class _MyAppState extends State<CrudBook> {
     }
   }
 
+  void _clearFields() {
+    _tittleController.clear();
+    _authorController.clear();
+    _editorialController.clear();
+    _descriptionController.clear();
+    _languageController.clear();
+    _priceController.clear();
+    _stockController.clear();
+    _yearController.clear();
+    _generController.clear();
+    _selectedOption = 'Ingrese formato';
+  }
+
+  void loadBookData(BookModel book) {
+    setState(() {
+      isEditing = true;
+      editingBookId = book.id;
+      _tittleController.text = book.tittle;
+      _authorController.text = book.autor;
+      _editorialController.text = book.editorial;
+      _descriptionController.text = book.description;
+      _languageController.text = book.language;
+      _priceController.text = book.price.toString();
+      _stockController.text = book.stock.toString();
+      _yearController.text = book.year.toString();
+      _generController.text = book.gender;
+      _selectedOption = book.format;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Color(0xFFF5F5F5),
-        //HEADER:
-        //appBar: const AppBarAndMenu(),
-        //CONTENT
-        body: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              floating:
-                  false, // No se muestra automáticamente al desplazarse hacia abajo
-              expandedHeight: 200.0, // Altura del AppBar expandido
-              flexibleSpace: FlexibleSpaceBar(
-                background: Container(
-                  color: const Color(0xFFF5F5F5),
-                  child:
-                      const AppBarAndMenu(), // Aquí se integra el AppBar personalizado
-                ),
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            floating: false,
+            expandedHeight: 200.0,
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                color: const Color(0xFFF5F5F5),
+                child: const AppBarAndMenu(),
               ),
             ),
-            SliverList(
-              delegate: SliverChildListDelegate([
-                Column(
-                  children: [
-                    SizedBox(
-                        child: ScrollConfiguration(
-                            behavior: ScrollConfiguration.of(context).copyWith(
-                              dragDevices: {
-                                PointerDeviceKind.touch,
-                                PointerDeviceKind.mouse,
-                              },
-                            ),
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.vertical,
-                              child: SizedBox(
-                                height: 600,
-                                width: 1535,
-                                child: CardCentralBook(),
-                              ),
-                            )))
-                  ],
-                )
-              ]),
-            ),
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Container(
-                color: Colors.grey[200],
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    //const Divider(),
-                    // Aquí se añade el MyFooter
-                    const MyFooter(),
-                  ],
-                ),
+          ),
+          SliverList(
+            delegate: SliverChildListDelegate([
+              Column(
+                children: [
+                  SizedBox(
+                    child: ScrollConfiguration(
+                      behavior: ScrollConfiguration.of(context).copyWith(
+                        dragDevices: {
+                          PointerDeviceKind.touch,
+                          PointerDeviceKind.mouse,
+                        },
+                      ),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.vertical,
+                        child: SizedBox(
+                          height: 600,
+                          width: 1535,
+                          child: CardCentralBook(),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ]),
+          ),
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Container(
+              color: Colors.grey[200],
+              child: const Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [MyFooter()],
               ),
             ),
-          ],
-          //FOOTER:
-          //bottomNavigationBar: const MyFooter(),
-        ));
+          ),
+        ],
+      ),
+    );
   }
 
   Card CardCentralBook() {
@@ -239,7 +277,6 @@ class _MyAppState extends State<CrudBook> {
                           }
                           return null;
                         },
-                        type: TextInputType.emailAddress,
                       ),
                       const SizedBox(height: 10),
                       CustomTextField(
@@ -253,7 +290,6 @@ class _MyAppState extends State<CrudBook> {
                           }
                           return null;
                         },
-                        type: TextInputType.emailAddress,
                       ),
                       const SizedBox(height: 10),
                       CustomTextField(
@@ -267,74 +303,118 @@ class _MyAppState extends State<CrudBook> {
                           }
                           return null;
                         },
-                        type: TextInputType.emailAddress,
                       ),
                       const SizedBox(height: 30),
                       Row(
                         children: [
-                          Container(
-                            margin: const EdgeInsets.all(16.0),
-                            child: InkWell(
-                              onTap: () async {
-                                if (formKey.currentState!.validate()) {
-                                  await registerBook();
+                          if (!isEditing) ...[
+                            Container(
+                              margin: const EdgeInsets.all(16.0),
+                              child: InkWell(
+                                onTap: () async {
+                                  if (formKey.currentState!.validate()) {
+                                    await registerBook();
+                                  }
+                                },
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Image.asset(
+                                      'assets/registrar.png',
+                                      width: 40,
+                                      height: 40,
+                                      color: const Color(0xFF000000),
+                                    ),
+                                    const Text(
+                                      'Registrar',
+                                      style:
+                                          TextStyle(color: Color(0xFF000000)),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Container(
+                              margin: const EdgeInsets.all(16.0),
+                              child: InkWell(
+                                onTap: _clearFields,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Image.asset(
+                                      'assets/borrador.png',
+                                      width: 40,
+                                      height: 40,
+                                      color: const Color(0xFF000000),
+                                    ),
+                                    const Text(
+                                      'Limpiar',
+                                      style:
+                                          TextStyle(color: Color(0xFF000000)),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ] else ...[
+                            Container(
+                              margin: const EdgeInsets.all(16.0),
+                              child: InkWell(
+                                onTap: () async {
+                                  if (formKey.currentState!.validate()) {
+                                  updateBook();
                                 }
-                              },
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Image.asset(
-                                    'assets/registrar.png',
-                                    width: 40,
-                                    height: 40,
-                                    color: const Color(0xFF000000),
-                                  ),
-                                  const Text(
-                                    'Registrar',
-                                    style: TextStyle(
-                                      color: Color(0xFF000000),
+                                },
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Image.asset(
+                                      'assets/editar.png',
+                                      width: 40,
+                                      height: 40,
+                                      color: const Color(0xFF000000),
                                     ),
-                                  ),
-                                ],
+                                    const Text(
+                                      'Guardar',
+                                      style:
+                                          TextStyle(color: Color(0xFF000000)),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          Container(
-                            margin: const EdgeInsets.all(16.0),
-                            child: InkWell(
-                              onTap: () {
-                                setState(() {
-                                  // Limpiar los campos del formulario
-                                  _tittleController.clear();
-                                  _authorController.clear();
-                                  _editorialController.clear();
-                                  _generController.clear();
-                                  _descriptionController.clear();
-                                  _yearController.clear();
-                                  _descriptionController.clear();
+                             Container(
+                              margin: const EdgeInsets.all(16.0),
+                              child: InkWell(
+                                onTap: () async {
+                                   setState(() {
+                                  isEditing = false;
+                                  editingBookId = null;
+                                  _clearFields();
                                 });
-                              },
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Image.asset(
-                                    'assets/borrador.png',
-                                    width: 40,
-                                    height: 40,
-                                    color: const Color(0xFF000000),
-                                  ),
-                                  const Text(
-                                    'Limpiar',
-                                    style: TextStyle(
-                                      color: Color(0xFF000000),
+                                },
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Image.asset(
+                                      'assets/cancelar.png',
+                                      width: 40,
+                                      height: 40,
+                                      color: const Color(0xFF000000),
                                     ),
-                                  ),
-                                ],
+                                    const Text(
+                                      'Cancelar',
+                                      style:
+                                          TextStyle(color: Color(0xFF000000)),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
+                           
+                          ],
                         ],
-                      )
+                      ),
                     ],
                   ),
                 ),
@@ -364,31 +444,11 @@ class _MyAppState extends State<CrudBook> {
                         height: 60,
                         label: 'Precio',
                         controller: _priceController,
-                        type: TextInputType.numberWithOptions(
-                            decimal: true), // Teclado numérico con decimales
+                        type: TextInputType.numberWithOptions(decimal: true),
                         inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(
-                              r'^\d*\.?\d{0,2}')), // Permitir números y hasta 2 decimales
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'^\d*\.?\d{0,2}')),
                         ],
-                        onChanged: (value) {
-                          setState(() {
-                            // Aquí puedes manejar cualquier validación adicional si es necesario
-                          });
-                        },
-                        // Formateamos automáticamente el valor cuando se guarda el campo
-                        onSaved: (value) {
-                          if (value != null && value.isNotEmpty) {
-                            // Si el valor no contiene un punto decimal, agregamos ".00"
-                            if (!value.contains('.')) {
-                              _priceController.text = double.parse(value)
-                                  .toStringAsFixed(2); // Agregamos .00
-                            } else {
-                              // Si ya contiene decimales, asegurarnos de que siempre tenga 2 decimales
-                              _priceController.text =
-                                  double.parse(value).toStringAsFixed(2);
-                            }
-                          }
-                        },
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Por favor, ingresa un precio';
@@ -397,21 +457,8 @@ class _MyAppState extends State<CrudBook> {
                           if (price == null || price <= 0) {
                             return 'Por favor, ingresa un precio válido';
                           }
-                          return null; // Precio válido
+                          return null;
                         },
-                        // onChanged: (value) {
-                        //   setState(() {
-                        //     formKey.currentState!
-                        //         .validate(); // Valida el formulario en tiempo real
-                        //   });
-                        // },
-                        // inputFormatters: [
-                        //   FilteringTextInputFormatter.allow(
-                        //       RegExp(r'^\d+\.?\d{0,2}')),
-                        // ],
-                        // type: TextInputType.numberWithOptions(
-                        //     decimal:
-                        //         true), // Permitir teclado numérico con decimales
                       ),
                       const SizedBox(height: 10),
                       CustomTextField(
@@ -459,7 +506,14 @@ class _MyAppState extends State<CrudBook> {
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: DropdownButton<String>(
-                            value: _selectedOption,
+                            value: _selectedOption.isNotEmpty &&
+                                    [
+                                      'Ingrese formato',
+                                      'Tapa blanda',
+                                      'Tapa dura'
+                                    ].contains(_selectedOption)
+                                ? _selectedOption
+                                : 'Ingrese formato', // Asegura que el valor por defecto esté en la lista
                             onChanged: (String? newValue) {
                               setState(() {
                                 _selectedOption = newValue!;
@@ -488,8 +542,11 @@ class _MyAppState extends State<CrudBook> {
                 ),
               ),
               const SizedBox(height: 10),
-              ContentDataTable(isLoading: isLoading, books: books),
-              //ContentDataTable(),
+              ContentDataTable(
+                isLoading: isLoading,
+                books: books,
+                onEdit: loadBookData,
+              ),
             ],
           ),
         ),
@@ -503,27 +560,23 @@ class ContentDataTable extends StatelessWidget {
     super.key,
     required this.isLoading,
     required this.books,
+    required this.onEdit,
   });
 
   final bool isLoading;
   final List<BookModel> books;
+  final Function(BookModel) onEdit;
 
   @override
   Widget build(BuildContext context) {
-    print('Books in the table: ${books.length}');
-
     return Expanded(
       flex: 5,
       child: Container(
         margin: const EdgeInsets.all(10.0),
         child: isLoading
-            ? const Center(
-                child: CircularProgressIndicator(),
-              )
+            ? const Center(child: CircularProgressIndicator())
             : books.isEmpty
-                ? const Center(
-                    child: Text('No data available'),
-                  )
+                ? const Center(child: Text('No data available'))
                 : ScrollConfiguration(
                     behavior: ScrollConfiguration.of(context).copyWith(
                       dragDevices: {
@@ -537,7 +590,6 @@ class ContentDataTable extends StatelessWidget {
                         scrollDirection: Axis.vertical,
                         child: DataTable(
                           columns: const [
-                            // DataColumn(label: Text('Id')),
                             DataColumn(label: Text('Título')),
                             DataColumn(label: Text('Autor')),
                             DataColumn(label: Text('Editorial')),
@@ -552,33 +604,31 @@ class ContentDataTable extends StatelessWidget {
                             DataColumn(label: Text('Fecha de Registro')),
                             DataColumn(label: Text('Fecha de Modificación')),
                             DataColumn(label: Text('Editar')),
-                            DataColumn(label: Text('Eliminar')),
                           ],
-                          rows: books
-                              .map(
-                                (books) => DataRow(
-                                  cells: [
-                                    // DataCell(Text(books.id)),
-                                    DataCell(Text(books.tittle)),
-                                    DataCell(Text(books.autor)),
-                                    DataCell(Text(books.editorial)),
-                                    DataCell(Text(books.gender)),
-                                    DataCell(Text(books.price.toString())),
-                                    DataCell(Text(books.stock.toString())),
-                                    DataCell(Text(books.description)),
-                                    DataCell(Text(books.year.toString())),
-                                    DataCell(Text(books.language)),
-                                    DataCell(Text(books.format)),
-                                    DataCell(Text(books.status.toString())),
-                                    DataCell(Text(
-                                        books.registerdate.toIso8601String())),
-                                    DataCell(Text(
-                                        books.updatedate.toIso8601String())),
-                                    DataCell(Center(
-                                      child: InkWell(
-                                        onTap: () {},
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
+                          rows: books.map((book) {
+                            return DataRow(cells: [
+                              DataCell(Text(book.tittle)),
+                              DataCell(Text(book.autor)),
+                              DataCell(Text(book.editorial)),
+                              DataCell(Text(book.gender)),
+                              DataCell(Text(book.price.toString())),
+                              DataCell(Text(book.stock.toString())),
+                              DataCell(Text(book.description)),
+                              DataCell(Text(book.year.toString())),
+                              DataCell(Text(book.language)),
+                              DataCell(Text(book.format)),
+                              DataCell(Text(book.status.toString())),
+                              DataCell(
+                                  Text(book.registerdate.toIso8601String())),
+                              DataCell(Text(book.updatedate.toIso8601String())),
+                              DataCell(Center(
+                                child: InkWell(
+                                  onTap: () {
+                                    onEdit(
+                                        book); // Llama a la función para editar
+                                  },
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
                                           children: [
                                             Image.asset(
                                               'assets/editar.png',
@@ -588,13 +638,29 @@ class ContentDataTable extends StatelessWidget {
                                             ),
                                           ],
                                         ),
-                                      ),
-                                    )),
-                                    const DataCell(Center()),
-                                  ],
+                                  )
+                                ),
+                              ),
+                               DataCell(Center(
+                                child: InkWell(
+                                  onTap: () {
+                                  },
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Image.asset(
+                                              'assets/eliminar.png',
+                                              width: 20,
+                                              height: 20,
+                                              color: const Color(0xFF000000),
+                                            ),
+                                          ],
+                                        ),
+                                  )
                                 ),
                               )
-                              .toList(),
+                            ]);
+                          }).toList(),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             border: Border.all(color: Colors.grey.shade300),
@@ -607,6 +673,4 @@ class ContentDataTable extends StatelessWidget {
       ),
     );
   }
-
-  void BookCreated(BookModel bookModel) async {}
 }
