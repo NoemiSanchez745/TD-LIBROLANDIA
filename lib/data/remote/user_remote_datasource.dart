@@ -4,7 +4,8 @@ import 'package:librolandia_001/data/model/users_model.dart';
 abstract class UserRemoteDataSource {
   Future<List<UserModel>> getUser();
   Future<void> addUser(UserModel userModel);
-  
+  Future<void> updateUser(UserModel updateUser);
+  Future<void> deleteUser(String id);
 
 }
 
@@ -34,6 +35,18 @@ class UserRemoteDataSourceImpl extends UserRemoteDataSource {
     userFirestoreRef.add(userModel);
   }
 
+ @override
+  Future<void> updateUser(UserModel userModel) async {
+    // Utilizamos el método `set` para actualizar un documento existente en Firestore
+    await userFirestoreRef.doc(userModel.id).update(userModel.toJson());
+  }
 
+ @override
+  Future<void> deleteUser(String id) async {
+    FirebaseFirestore.instance
+      .collection("user")
+      .doc(id)
+      .delete(); 
+}
 
 }

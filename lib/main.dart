@@ -23,11 +23,10 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
       routes: {
-        '/': (context) => const CrudBook(),
-        // '/': (context) => const UsersView(),
+        '/': (context) => const CrudUsers(),
         '/crud_users': (context) => const CrudUsers(),
         '/crud_book': (context) => const CrudBook(),
-
+        
         
         
         },

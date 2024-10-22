@@ -121,7 +121,9 @@ class _MyAppState extends State<CrudBook> {
     try {
       final loadedBooks = await bookRemoteDataSource.getBook();
       setState(() {
-        books = loadedBooks;
+        books = loadedBooks
+            .where((book) => book.status == 1)
+            .toList(); // Solo libros con status 1
         isLoading = false;
       });
     } catch (e) {
@@ -162,59 +164,157 @@ class _MyAppState extends State<CrudBook> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            floating: false,
-            expandedHeight: 200.0,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                color: const Color(0xFFF5F5F5),
-                child: const AppBarAndMenu(),
-              ),
-            ),
-          ),
-          SliverList(
-            delegate: SliverChildListDelegate([
-              Column(
+  Future<void> softDeleteBook(BookModel book) async {
+    try {
+      final updatedBook = BookModel(
+        id: book.id,
+        tittle: book.tittle,
+        autor: book.autor,
+        editorial: book.editorial,
+        gender: book.gender,
+        price: book.price,
+        stock: book.stock,
+        description: book.description,
+        year: book.year,
+        language: book.language,
+        format: book.format,
+        registerdate: book.registerdate,
+        status: 0, // Cambia el estado a 0
+        updatedate: DateTime.now(),
+      );
+
+      await bookRemoteDataSource.updateBook(updatedBook);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Libro eliminado exitosamente')),
+      );
+      loadBooks();
+    } catch (e) {
+      print('Error al eliminar el libro: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al eliminar el libro: $e')),
+      );
+    }
+  }
+
+  void _showDeleteDialog(BookModel book) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirmar eliminación'),
+          content: const Text('¿Estás segura de eliminar este libro?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  SizedBox(
-                    child: ScrollConfiguration(
-                      behavior: ScrollConfiguration.of(context).copyWith(
-                        dragDevices: {
-                          PointerDeviceKind.touch,
-                          PointerDeviceKind.mouse,
-                        },
-                      ),
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.vertical,
-                        child: SizedBox(
-                          height: 600,
-                          width: 1535,
-                          child: CardCentralBook(),
-                        ),
-                      ),
-                    ),
+                  Image.asset(
+                    'assets/cancelar.png',
+                    width: 40,
+                    height: 40,
+                    color: const Color(0xFF000000),
+                  ),
+                  const Text(
+                    'Cancelar',
+                    style: TextStyle(color: Color(0xFF000000)),
                   ),
                 ],
               ),
-            ]),
-          ),
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: Container(
-              color: Colors.grey[200],
-              child: const Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [MyFooter()],
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                softDeleteBook(book);
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/eliminar.png',
+                    width: 40,
+                    height: 40,
+                    color: const Color(0xFF000000),
+                  ),
+                  const Text(
+                    'Eliminar',
+                    style: TextStyle(color: Color(0xFF000000)),
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+          ],
+        );
+      },
+    );
+  }
+// Nueva función para resetear las validaciones
+  void _resetValidationMessages() {
+    formKey.currentState?.reset(); // Restablecer el estado del formulario
+    setState(() {}); // Vuelve a renderizar la vista
+  }
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+       onTap: () {
+        FocusScope.of(context).unfocus(); // Oculta el teclado al hacer clic fuera
+        _resetValidationMessages(); // Resetea las validaciones al hacer clic fuera
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF5F5F5),
+        body: CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              floating: false,
+              expandedHeight: 200.0,
+              flexibleSpace: FlexibleSpaceBar(
+                background: Container(
+                  color: const Color(0xFFF5F5F5),
+                  child: const AppBarAndMenu(),
+                ),
+              ),
+            ),
+            SliverList(
+              delegate: SliverChildListDelegate([
+                Column(
+                  children: [
+                    SizedBox(
+                      child: ScrollConfiguration(
+                        behavior: ScrollConfiguration.of(context).copyWith(
+                          dragDevices: {
+                            PointerDeviceKind.touch,
+                            PointerDeviceKind.mouse,
+                          },
+                        ),
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.vertical,
+                          child: SizedBox(
+                            height: 600,
+                            width: 1535,
+                            child: CardCentralBook(),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ]),
+            ),
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Container(
+                color: Colors.grey[200],
+                child: const Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [MyFooter()],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -362,8 +462,8 @@ class _MyAppState extends State<CrudBook> {
                               child: InkWell(
                                 onTap: () async {
                                   if (formKey.currentState!.validate()) {
-                                  updateBook();
-                                }
+                                    updateBook();
+                                  }
                                 },
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
@@ -383,15 +483,15 @@ class _MyAppState extends State<CrudBook> {
                                 ),
                               ),
                             ),
-                             Container(
+                            Container(
                               margin: const EdgeInsets.all(16.0),
                               child: InkWell(
                                 onTap: () async {
-                                   setState(() {
-                                  isEditing = false;
-                                  editingBookId = null;
-                                  _clearFields();
-                                });
+                                  setState(() {
+                                    isEditing = false;
+                                    editingBookId = null;
+                                    _clearFields();
+                                  });
                                 },
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
@@ -411,7 +511,6 @@ class _MyAppState extends State<CrudBook> {
                                 ),
                               ),
                             ),
-                           
                           ],
                         ],
                       ),
@@ -546,6 +645,7 @@ class _MyAppState extends State<CrudBook> {
                 isLoading: isLoading,
                 books: books,
                 onEdit: loadBookData,
+                onDelete: _showDeleteDialog, // Pasa la función de eliminar
               ),
             ],
           ),
@@ -561,11 +661,13 @@ class ContentDataTable extends StatelessWidget {
     required this.isLoading,
     required this.books,
     required this.onEdit,
+    required this.onDelete,
   });
 
   final bool isLoading;
   final List<BookModel> books;
   final Function(BookModel) onEdit;
+  final Function(BookModel) onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -604,6 +706,7 @@ class ContentDataTable extends StatelessWidget {
                             DataColumn(label: Text('Fecha de Registro')),
                             DataColumn(label: Text('Fecha de Modificación')),
                             DataColumn(label: Text('Editar')),
+                            DataColumn(label: Text('Eliminar')),
                           ],
                           rows: books.map((book) {
                             return DataRow(cells: [
@@ -621,43 +724,44 @@ class ContentDataTable extends StatelessWidget {
                               DataCell(
                                   Text(book.registerdate.toIso8601String())),
                               DataCell(Text(book.updatedate.toIso8601String())),
-                              DataCell(Center(
-                                child: InkWell(
+                              DataCell(
+                                Center(
+                                    child: InkWell(
                                   onTap: () {
                                     onEdit(
                                         book); // Llama a la función para editar
                                   },
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Image.asset(
-                                              'assets/editar.png',
-                                              width: 20,
-                                              height: 20,
-                                              color: const Color(0xFF000000),
-                                            ),
-                                          ],
-                                        ),
-                                  )
-                                ),
+                                    children: [
+                                      Image.asset(
+                                        'assets/editar.png',
+                                        width: 20,
+                                        height: 20,
+                                        color: const Color(0xFF000000),
+                                      ),
+                                    ],
+                                  ),
+                                )),
                               ),
-                               DataCell(Center(
-                                child: InkWell(
+                              DataCell(
+                                Center(
+                                    child: InkWell(
                                   onTap: () {
+                                    onDelete(book); // Llama a la función de eliminación
                                   },
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Image.asset(
-                                              'assets/eliminar.png',
-                                              width: 20,
-                                              height: 20,
-                                              color: const Color(0xFF000000),
-                                            ),
-                                          ],
-                                        ),
-                                  )
-                                ),
+                                    children: [
+                                      Image.asset(
+                                        'assets/eliminar.png',
+                                        width: 20,
+                                        height: 20,
+                                        color: const Color(0xFF000000),
+                                      ),
+                                    ],
+                                  ),
+                                )),
                               )
                             ]);
                           }).toList(),

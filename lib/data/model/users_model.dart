@@ -36,25 +36,35 @@ class UserModel {
         username: json['username'] ?? "",
         password: json['password'] ?? "",
         rol: json['rol'] ?? "",
-        cellphone: json['cellphone'] is String
-            ? int.tryParse(json['cellphone']) ?? 0
-            : (json['cellphone'] ?? 0),
-        ci: json['ci'] is String
-            ? int.tryParse(json['ci']) ?? 0
-            : (json['ci'] ?? 0),
+      
+        cellphone: int.tryParse(json['cellphone']?.toString() ?? '0') ?? 0,
+       
+        ci: int.tryParse(json['ci']?.toString() ?? '0') ?? 0,
         lastname: json['lastname'] ?? "",
         mail: json['mail'] ?? "",
         name: json['name'] ?? "",
-        registerdate: json['registerDate'] is Timestamp
-            ? (json['registerDate'] as Timestamp).toDate()
-            : DateTime.tryParse(json['registerDate'] ?? '') ?? DateTime.now(),
-        status: json['status'] is String
-            ? int.tryParse(json['status']) ?? 1
-            : (json['status'] ?? 1),
+       
         surname: json['surname'] ?? "",
-        updatedate: json['updateDate'] is Timestamp
-            ? (json['updateDate'] as Timestamp).toDate()
-            : DateTime.tryParse(json['updateDate'] ?? '') ?? DateTime.now(),
+        registerdate: DateTime.parse( json['registerdate']),
+      // registerdate: json['registerDate'] is Timestamp
+      // ? (json['registerDate'] as Timestamp).toDate()
+      // : DateTime.now(),
+// Se asegura de que si hay fechas en Firestore, las use. Si no, usa DateTime.now()
+        // registerdate: json['registerdate'] != null && json['registerdate'] is Timestamp
+        //     ? (json['registerdate'] as Timestamp).toDate()
+        //     : DateTime.now(),
+
+        status: json['status'] is String
+      ? int.tryParse(json['status']) ?? 1
+      : (json['status'] ?? 1),
+        updatedate: DateTime.parse( json['updatedate']),
+     
+        // updatedate: json['updateDate'] is Timestamp
+        // ? (json['updateDate'] as Timestamp).toDate()
+        // : DateTime.now(),
+        // updatedate: json['updatedate'] != null && json['updatedate'] is Timestamp
+        //     ? (json['updatedate'] as Timestamp).toDate()
+        //     : DateTime.now(),
       );
 
   Map<String, dynamic> toJson() {
