@@ -27,15 +27,17 @@ class _MyAppState extends State<CrudBook> {
   final TextEditingController _stockController = TextEditingController();
   final TextEditingController _yearController = TextEditingController();
   final TextEditingController _generController = TextEditingController();
+  final TextEditingController _isbnController = TextEditingController();
 
-  String _selectedOption = 'Ingrese formato';
+  String _selectedOption = 'Tapa blanda';
+  String _selectedOptionCategory = 'Comics';
   bool isLoading = true;
   List<BookModel> books = [];
   final bookRemoteDataSource = BookRemoteDataSourceImpl();
 
   bool isEditing = false; // Controla si se está editando un libro
   String? editingBookId; // ID del libro que se está editando
-
+  BookModel? editingBook; //Almacena el libro que se esta editando
   @override
   void initState() {
     super.initState();
@@ -46,15 +48,15 @@ class _MyAppState extends State<CrudBook> {
     try {
       final newBook = BookModel(
         id: '',
-        tittle: _tittleController.text,
-        autor: _authorController.text,
-        editorial: _editorialController.text,
-        gender: _generController.text,
+        tittle: _tittleController.text.toUpperCase(),
+        autor: _authorController.text.toUpperCase(),
+        editorial: _editorialController.text.toUpperCase(),
+        gender: _generController.text.toUpperCase(),
         price: double.parse(_priceController.text),
         stock: int.parse(_stockController.text),
         description: _descriptionController.text,
         year: int.parse(_yearController.text),
-        language: _languageController.text,
+        language: _languageController.text.toUpperCase(),
         format: _selectedOption,
         registerdate: DateTime.now(),
         status: 1,
@@ -77,33 +79,41 @@ class _MyAppState extends State<CrudBook> {
   }
 
   Future<void> updateBook() async {
-    if (editingBookId != null) {
+    if (editingBook != null) {
       try {
         final updatedBook = BookModel(
-          id: editingBookId!,
-          tittle: _tittleController.text,
-          autor: _authorController.text,
-          editorial: _editorialController.text,
-          gender: _generController.text,
+          id: editingBook!.id,
+          tittle: _tittleController.text.toUpperCase(),
+          autor: _authorController.text.toUpperCase(),
+          editorial: _editorialController.text.toUpperCase(),
+          gender: _generController.text.toUpperCase(),
           price: double.parse(_priceController.text),
           stock: int.parse(_stockController.text),
           description: _descriptionController.text,
           year: int.parse(_yearController.text),
-          language: _languageController.text,
+          language: _languageController.text.toUpperCase(),
           format: _selectedOption,
-          registerdate: DateTime.now(),
-          status: 1,
+          registerdate: editingBook!.registerdate,
+          status: editingBook!.status,
           updatedate: DateTime.now(),
         );
 
         await bookRemoteDataSource.updateBook(updatedBook);
 
+// Actualizar la lista en la UI sin recargar todos los libros
+        setState(() {
+          // Encontrar el índice del libro editado en la lista
+          final index = books.indexWhere((book) => book.id == updatedBook.id);
+          if (index != -1) {
+            books[index] = updatedBook; // Reemplazar solo el libro editado
+          }
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Libro actualizado exitosamente')),
         );
 
         _clearFields();
-        loadBooks();
+        // loadBooks();
         setState(() {
           isEditing = false;
           editingBookId = null;
@@ -144,13 +154,13 @@ class _MyAppState extends State<CrudBook> {
     _stockController.clear();
     _yearController.clear();
     _generController.clear();
-    _selectedOption = 'Ingrese formato';
+    _selectedOption = 'Tapa blanda';
   }
 
   void loadBookData(BookModel book) {
     setState(() {
       isEditing = true;
-      editingBookId = book.id;
+      editingBook = book;
       _tittleController.text = book.tittle;
       _authorController.text = book.autor;
       _editorialController.text = book.editorial;
@@ -251,16 +261,19 @@ class _MyAppState extends State<CrudBook> {
       },
     );
   }
+
 // Nueva función para resetear las validaciones
   void _resetValidationMessages() {
     formKey.currentState?.reset(); // Restablecer el estado del formulario
     setState(() {}); // Vuelve a renderizar la vista
   }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-       onTap: () {
-        FocusScope.of(context).unfocus(); // Oculta el teclado al hacer clic fuera
+      onTap: () {
+        FocusScope.of(context)
+            .unfocus(); // Oculta el teclado al hacer clic fuera
         _resetValidationMessages(); // Resetea las validaciones al hacer clic fuera
       },
       child: Scaffold(
@@ -404,6 +417,20 @@ class _MyAppState extends State<CrudBook> {
                           return null;
                         },
                       ),
+                      const SizedBox(height: 10),
+                      CustomTextField(
+                        width: 300,
+                        height: 60,
+                        label: 'Ingrese el código Isbn',
+                        controller: _isbnController,
+                        validator: (value) {
+                          if (value!.isEmpty) {
+                            return 'Por favor, ingresa el código';
+                          }
+                          return null;
+                        },
+                      ),
+                      
                       const SizedBox(height: 30),
                       Row(
                         children: [
@@ -596,6 +623,7 @@ class _MyAppState extends State<CrudBook> {
                       const SizedBox(height: 10),
                       Container(
                         width: 300,
+                        height: 57,
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(10),
@@ -607,21 +635,67 @@ class _MyAppState extends State<CrudBook> {
                           child: DropdownButton<String>(
                             value: _selectedOption.isNotEmpty &&
                                     [
-                                      'Ingrese formato',
+                                      // 'Ingrese formato',
                                       'Tapa blanda',
                                       'Tapa dura'
                                     ].contains(_selectedOption)
                                 ? _selectedOption
-                                : 'Ingrese formato', // Asegura que el valor por defecto esté en la lista
+                                : 'Tapa blanda', // Asegura que el valor por defecto esté en la lista
                             onChanged: (String? newValue) {
                               setState(() {
                                 _selectedOption = newValue!;
                               });
                             },
                             items: <String>[
-                              'Ingrese formato',
+                              // 'Ingrese formato',
                               'Tapa blanda',
                               'Tapa dura',
+                            ].map<DropdownMenuItem<String>>((String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value,
+                                    style: const TextStyle(
+                                        color: Color(0xFF716B6B))),
+                              );
+                            }).toList(),
+                            underline: Container(),
+                            dropdownColor: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        width: 300,
+                        height: 57,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                              color: const Color.fromARGB(255, 255, 255, 255)),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: DropdownButton<String>(
+                            value: _selectedOptionCategory.isNotEmpty &&
+                                    [
+                                      // 'Ingrese formato',
+                                      'Infantiles',
+                                      'Novelas',
+                                      'Comics',
+                                    ].contains(_selectedOptionCategory)
+                                ? _selectedOptionCategory
+                                : 'Comics', // Asegura que el valor por defecto esté en la lista
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                _selectedOptionCategory = newValue!;
+                              });
+                            },
+                            items: <String>[
+                              // 'Ingrese formato',
+                              'Infantiles',
+                              'Novelas',
+                              'Comics',
                             ].map<DropdownMenuItem<String>>((String value) {
                               return DropdownMenuItem<String>(
                                 value: value,
@@ -748,7 +822,8 @@ class ContentDataTable extends StatelessWidget {
                                 Center(
                                     child: InkWell(
                                   onTap: () {
-                                    onDelete(book); // Llama a la función de eliminación
+                                    onDelete(
+                                        book); // Llama a la función de eliminación
                                   },
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,

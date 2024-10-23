@@ -46,25 +46,12 @@ class UserModel {
        
         surname: json['surname'] ?? "",
         registerdate: DateTime.parse( json['registerdate']),
-      // registerdate: json['registerDate'] is Timestamp
-      // ? (json['registerDate'] as Timestamp).toDate()
-      // : DateTime.now(),
-// Se asegura de que si hay fechas en Firestore, las use. Si no, usa DateTime.now()
-        // registerdate: json['registerdate'] != null && json['registerdate'] is Timestamp
-        //     ? (json['registerdate'] as Timestamp).toDate()
-        //     : DateTime.now(),
-
+      
         status: json['status'] is String
       ? int.tryParse(json['status']) ?? 1
       : (json['status'] ?? 1),
         updatedate: DateTime.parse( json['updatedate']),
      
-        // updatedate: json['updateDate'] is Timestamp
-        // ? (json['updateDate'] as Timestamp).toDate()
-        // : DateTime.now(),
-        // updatedate: json['updatedate'] != null && json['updatedate'] is Timestamp
-        //     ? (json['updatedate'] as Timestamp).toDate()
-        //     : DateTime.now(),
       );
 
   Map<String, dynamic> toJson() {

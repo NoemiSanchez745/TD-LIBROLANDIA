@@ -45,15 +45,9 @@ class BookModel {
   year: int.tryParse(json['year']?.toString() ?? '0') ?? 0,
   language: json['language'] ?? "",
   format: json['format'] ?? "",
-  registerdate: json['registerDate'] is Timestamp
-      ? (json['registerDate'] as Timestamp).toDate()
-      : DateTime.now(),
-  status: json['status'] is String
-      ? int.tryParse(json['status']) ?? 1
-      : (json['status'] ?? 1),
-  updatedate: json['updateDate'] is Timestamp
-      ? (json['updateDate'] as Timestamp).toDate()
-      : DateTime.now(),
+  registerdate: DateTime.parse( json['registerdate']),
+  status: json['status'] is String ? int.tryParse(json['status']) ?? 1 : (json['status'] ?? 1),
+  updatedate: DateTime.parse( json['updatedate']),
 );
 
 

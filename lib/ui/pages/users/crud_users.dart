@@ -57,9 +57,9 @@ class _CrudUsersState extends State<CrudUsers> {
       // Crear un nuevo usuario con los datos del formulario y el nombre de usuario y contraseña generados
       final newUser = UserModel(
         id: '',
-        name: _nameController.text,
-        lastname: _lastnameController.text,
-        surname: _surnameController.text,
+        name: _nameController.text.toUpperCase(),
+        lastname: _lastnameController.text.toUpperCase(),
+        surname: _surnameController.text.toUpperCase(),
         ci: int.parse(_ciController.text),
         mail: _mailController.text,
         cellphone: int.parse(_cellphoneController.text),
@@ -111,9 +111,9 @@ class _CrudUsersState extends State<CrudUsers> {
       try {
         final updatedUser = UserModel(
           id: editingUser!.id,
-          name: _nameController.text,
-          lastname: _lastnameController.text,
-          surname: _surnameController.text,
+          name: _nameController.text.toUpperCase(),
+          lastname: _lastnameController.text.toUpperCase(),
+          surname: _surnameController.text.toUpperCase(),
           ci: int.parse(_ciController.text),
           mail: _mailController.text,
           cellphone: int.parse(_cellphoneController.text),
@@ -306,11 +306,17 @@ class _CrudUsersState extends State<CrudUsers> {
     );
   }
 
+void _resetValidationMessages() {
+    formKey.currentState?.reset(); // Restablecer el estado del formulario
+    setState(() {}); // Vuelve a renderizar la vista
+  }
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
+        // FocusScope.of(context).unfocus(); // Oculta el teclado al hacer clic fuera
         FocusScope.of(context).unfocus(); // Oculta el teclado al hacer clic fuera
+        _resetValidationMessages(); // Resetea las validaciones al hacer clic fuera
       },
       child: Scaffold(
         backgroundColor: const Color(0xFFF5F5F5),
@@ -449,7 +455,7 @@ class _CrudUsersState extends State<CrudUsers> {
                             },
                             items: <String>[
                               'Administrador',
-                              'Usuario',
+                              'Ayudante',
                               'Invitado'
                             ].map<DropdownMenuItem<String>>((String value) {
                               return DropdownMenuItem<String>(
