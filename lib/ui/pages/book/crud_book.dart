@@ -304,9 +304,9 @@ class _MyAppState extends State<CrudBook> {
                         ),
                         child: SingleChildScrollView(
                           scrollDirection: Axis.vertical,
-                          child: SizedBox(
-                            height: 600,
-                            width: 1535,
+                          child: Expanded(
+                            // height: 600,
+                            // width: 1535,
                             child: CardCentralBook(),
                           ),
                         ),
