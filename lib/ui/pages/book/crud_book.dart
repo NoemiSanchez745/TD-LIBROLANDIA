@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:ui';
+import 'package:barcode_scan2/platform_wrapper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:librolandia_001/data/model/books_model.dart';
@@ -6,6 +8,8 @@ import 'package:librolandia_001/data/remote/book_remote_datasource.dart';
 import 'package:librolandia_001/ui/pages/Footer/footer.dart';
 import 'package:librolandia_001/ui/pages/Header/header.dart';
 import 'package:librolandia_001/ui/pages/widgets/custom_text_field.dart';
+import 'package:http/http.dart' as http;
+
 
 void main() => runApp(const CrudBook());
 
@@ -27,7 +31,8 @@ class _MyAppState extends State<CrudBook> {
   final TextEditingController _stockController = TextEditingController();
   final TextEditingController _yearController = TextEditingController();
   final TextEditingController _generController = TextEditingController();
-  final TextEditingController _isbnController = TextEditingController();
+  final TextEditingController _isbnController =TextEditingController(); // Añadido
+  // final TextEditingController _categoryController = TextEditingController(); // Añadido
 
   String _selectedOption = 'Tapa blanda';
   String _selectedOptionCategory = 'Comics';
@@ -37,7 +42,9 @@ class _MyAppState extends State<CrudBook> {
 
   bool isEditing = false; // Controla si se está editando un libro
   String? editingBookId; // ID del libro que se está editando
-  BookModel? editingBook; //Almacena el libro que se esta editando
+  BookModel? editingBook;
+
+  // get http => null; //Almacena el libro que se esta editando
   @override
   void initState() {
     super.initState();
@@ -47,21 +54,23 @@ class _MyAppState extends State<CrudBook> {
   Future<void> registerBook() async {
     try {
       final newBook = BookModel(
-        id: '',
-        tittle: _tittleController.text.toUpperCase(),
-        autor: _authorController.text.toUpperCase(),
-        editorial: _editorialController.text.toUpperCase(),
-        gender: _generController.text.toUpperCase(),
-        price: double.parse(_priceController.text),
-        stock: int.parse(_stockController.text),
-        description: _descriptionController.text,
-        year: int.parse(_yearController.text),
-        language: _languageController.text.toUpperCase(),
-        format: _selectedOption,
-        registerdate: DateTime.now(),
-        status: 1,
-        updatedate: DateTime.now(),
-      );
+          id: '',
+          tittle: _tittleController.text.toUpperCase(),
+          autor: _authorController.text.toUpperCase(),
+          editorial: _editorialController.text.toUpperCase(),
+          gender: _generController.text.toUpperCase(),
+          price: double.parse(_priceController.text),
+          stock: int.parse(_stockController.text),
+          description: _descriptionController.text,
+          year: int.parse(_yearController.text),
+          language: _languageController.text.toUpperCase(),
+          format: _selectedOption,
+          registerdate: DateTime.now(),
+          status: 1,
+          updatedate: DateTime.now(),
+          isbn: _isbnController.text, // Campo añadido
+          category: _selectedOptionCategory // Campo añadido
+          );
 
       await bookRemoteDataSource.addBook(newBook);
 
@@ -82,21 +91,23 @@ class _MyAppState extends State<CrudBook> {
     if (editingBook != null) {
       try {
         final updatedBook = BookModel(
-          id: editingBook!.id,
-          tittle: _tittleController.text.toUpperCase(),
-          autor: _authorController.text.toUpperCase(),
-          editorial: _editorialController.text.toUpperCase(),
-          gender: _generController.text.toUpperCase(),
-          price: double.parse(_priceController.text),
-          stock: int.parse(_stockController.text),
-          description: _descriptionController.text,
-          year: int.parse(_yearController.text),
-          language: _languageController.text.toUpperCase(),
-          format: _selectedOption,
-          registerdate: editingBook!.registerdate,
-          status: editingBook!.status,
-          updatedate: DateTime.now(),
-        );
+            id: editingBook!.id,
+            tittle: _tittleController.text.toUpperCase(),
+            autor: _authorController.text.toUpperCase(),
+            editorial: _editorialController.text.toUpperCase(),
+            gender: _generController.text.toUpperCase(),
+            price: double.parse(_priceController.text),
+            stock: int.parse(_stockController.text),
+            description: _descriptionController.text,
+            year: int.parse(_yearController.text),
+            language: _languageController.text.toUpperCase(),
+            format: _selectedOption,
+            registerdate: editingBook!.registerdate,
+            status: editingBook!.status,
+            updatedate: DateTime.now(),
+            isbn: _isbnController.text, // Campo añadido
+            category: _selectedOptionCategory // Campo añadido
+            );
 
         await bookRemoteDataSource.updateBook(updatedBook);
 
@@ -154,6 +165,8 @@ class _MyAppState extends State<CrudBook> {
     _stockController.clear();
     _yearController.clear();
     _generController.clear();
+    _isbnController.clear(); // Añadido
+    _selectedOptionCategory = 'Comics'; // Añadido
     _selectedOption = 'Tapa blanda';
   }
 
@@ -171,27 +184,29 @@ class _MyAppState extends State<CrudBook> {
       _yearController.text = book.year.toString();
       _generController.text = book.gender;
       _selectedOption = book.format;
+      _selectedOptionCategory = book.category;
     });
   }
 
   Future<void> softDeleteBook(BookModel book) async {
     try {
       final updatedBook = BookModel(
-        id: book.id,
-        tittle: book.tittle,
-        autor: book.autor,
-        editorial: book.editorial,
-        gender: book.gender,
-        price: book.price,
-        stock: book.stock,
-        description: book.description,
-        year: book.year,
-        language: book.language,
-        format: book.format,
-        registerdate: book.registerdate,
-        status: 0, // Cambia el estado a 0
-        updatedate: DateTime.now(),
-      );
+          id: book.id,
+          tittle: book.tittle,
+          autor: book.autor,
+          editorial: book.editorial,
+          gender: book.gender,
+          price: book.price,
+          stock: book.stock,
+          description: book.description,
+          year: book.year,
+          language: book.language,
+          format: book.format,
+          registerdate: book.registerdate,
+          status: 0, // Cambia el estado a 0
+          updatedate: DateTime.now(),
+          category: book.category,
+          isbn: book.isbn);
 
       await bookRemoteDataSource.updateBook(updatedBook);
 
@@ -266,6 +281,62 @@ class _MyAppState extends State<CrudBook> {
   void _resetValidationMessages() {
     formKey.currentState?.reset(); // Restablecer el estado del formulario
     setState(() {}); // Vuelve a renderizar la vista
+  }
+
+// Método para obtener los datos del libro utilizando la API de Google Books
+  Future<void> fetchBookData(String isbn) async {
+  try {
+    var url =
+        'https://www.googleapis.com/books/v1/volumes?q=isbn:$isbn&key=AIzaSyD7z0Qa3voDN7UqTgE7WahdYa1pY3dI2Nc';
+    var response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      var data = json.decode(response.body);
+      if (data['items'] != null && data['items'].isNotEmpty) {
+        var volumeInfo = data['items'][0]['volumeInfo'];
+
+        setState(() {
+          _tittleController.text =volumeInfo['title'] ?? 'Título no disponible';
+          _authorController.text = (volumeInfo['authors'] != null) ? volumeInfo['authors'].join(', '): 'Autor no disponible';
+          _generController.text = (volumeInfo['categories'] != null)? volumeInfo['categories'].join(', '): 'Género no disponible';
+          _editorialController.text =volumeInfo['publisher'] ?? 'Editorial no disponible';
+          _yearController.text=volumeInfo['year'] ?? 0;
+          _languageController.text=volumeInfo['languages'] ?? 'Idioma no disponible';
+          _descriptionController.text=volumeInfo['description'] ?? 'Descripción no disponible';
+
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('No se encontraron datos para este ISBN')),
+        );
+      }
+    } else {
+      print('Error en la consulta: ${response.statusCode}');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(
+                'Error al obtener datos del libro: ${response.statusCode}')),
+      );
+    }
+  } catch (e) {
+    print('Error al obtener datos del libro: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error al obtener datos del libro: $e')),
+    );
+  }
+}
+  // Método para escanear el ISBN
+  Future<void> scanBarcode() async {
+    try {
+      var result = await BarcodeScanner.scan();
+      setState(() {
+        _isbnController.text = result.rawContent;
+      });
+      fetchBookData(result.rawContent);
+    } catch (e) {
+      print('Error al escanear el código de barras: $e');
+    }
   }
 
   @override
@@ -430,7 +501,6 @@ class _MyAppState extends State<CrudBook> {
                           return null;
                         },
                       ),
-                      
                       const SizedBox(height: 30),
                       Row(
                         children: [
@@ -710,6 +780,42 @@ class _MyAppState extends State<CrudBook> {
                           ),
                         ),
                       ),
+                      Container(
+                        margin: const EdgeInsets.all(16.0),
+                        child: InkWell(
+                          onTap: () async {
+                            // //  scanBarcode;
+                            // // Verifica si el campo ISBN no está vacío antes de hacer la consulta
+                            if (_isbnController.text.isNotEmpty) {
+                              fetchBookData(_isbnController
+                                  .text); // Llama a la función que consulta a la API
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Por favor, ingresa el ISBN antes de buscar.')),
+                              );
+                            }
+
+                            
+                          },
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Image.asset(
+                                'assets/escanear.png',
+                                width: 40,
+                                height: 40,
+                                color: const Color(0xFF000000),
+                              ),
+                              const Text(
+                                'Escanear ISBN',
+                                style: TextStyle(color: Color(0xFF000000)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -772,15 +878,17 @@ class ContentDataTable extends StatelessWidget {
                             DataColumn(label: Text('Género')),
                             DataColumn(label: Text('Precio')),
                             DataColumn(label: Text('Stock')),
-                            DataColumn(label: Text('Descripción')),
                             DataColumn(label: Text('Año')),
                             DataColumn(label: Text('Idioma')),
                             DataColumn(label: Text('Formato')),
                             DataColumn(label: Text('Estado')),
                             DataColumn(label: Text('Fecha de Registro')),
                             DataColumn(label: Text('Fecha de Modificación')),
+                            DataColumn(label: Text('Isbn')),
+                            DataColumn(label: Text('Descripción')),
                             DataColumn(label: Text('Editar')),
                             DataColumn(label: Text('Eliminar')),
+
                           ],
                           rows: books.map((book) {
                             return DataRow(cells: [
@@ -790,7 +898,6 @@ class ContentDataTable extends StatelessWidget {
                               DataCell(Text(book.gender)),
                               DataCell(Text(book.price.toString())),
                               DataCell(Text(book.stock.toString())),
-                              DataCell(Text(book.description)),
                               DataCell(Text(book.year.toString())),
                               DataCell(Text(book.language)),
                               DataCell(Text(book.format)),
@@ -798,6 +905,8 @@ class ContentDataTable extends StatelessWidget {
                               DataCell(
                                   Text(book.registerdate.toIso8601String())),
                               DataCell(Text(book.updatedate.toIso8601String())),
+                              DataCell(Text(book.isbn)),
+                              DataCell(Text(book.description)),
                               DataCell(
                                 Center(
                                     child: InkWell(
@@ -837,7 +946,7 @@ class ContentDataTable extends StatelessWidget {
                                     ],
                                   ),
                                 )),
-                              )
+                              ),
                             ]);
                           }).toList(),
                           decoration: BoxDecoration(

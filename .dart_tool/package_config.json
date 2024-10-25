@@ -26,6 +26,12 @@
       "languageVersion": "2.18"
     },
     {
+      "name": "barcode_scan2",
+      "rootUri": "file:///C:/Users/Noemi/AppData/Local/Pub/Cache/hosted/pub.dev/barcode_scan2-4.3.3",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
       "name": "boolean_selector",
       "rootUri": "file:///C:/Users/Noemi/AppData/Local/Pub/Cache/hosted/pub.dev/boolean_selector-2.1.1",
       "packageUri": "lib/",
@@ -114,6 +120,12 @@
       "rootUri": "file:///C:/Users/Noemi/AppData/Local/Pub/Cache/hosted/pub.dev/firebase_core_web-2.10.0",
       "packageUri": "lib/",
       "languageVersion": "2.18"
+    },
+    {
+      "name": "fixnum",
+      "rootUri": "file:///C:/Users/Noemi/AppData/Local/Pub/Cache/hosted/pub.dev/fixnum-1.1.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.1"
     },
     {
       "name": "flutter",
@@ -252,6 +264,12 @@
       "rootUri": "file:///C:/Users/Noemi/AppData/Local/Pub/Cache/hosted/pub.dev/plugin_platform_interface-2.1.8",
       "packageUri": "lib/",
       "languageVersion": "3.0"
+    },
+    {
+      "name": "protobuf",
+      "rootUri": "file:///C:/Users/Noemi/AppData/Local/Pub/Cache/hosted/pub.dev/protobuf-3.1.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.19"
     },
     {
       "name": "scrollable_positioned_list",
@@ -410,7 +428,7 @@
       "languageVersion": "3.2"
     }
   ],
-  "generated": "2024-05-21T22:45:11.700183Z",
+  "generated": "2024-10-24T18:25:12.160451Z",
   "generator": "pub",
   "generatorVersion": "3.2.0-134.1.beta"
 }

@@ -15,6 +15,8 @@ class BookModel {
   int status;
   DateTime registerdate;
   DateTime updatedate;
+  String isbn; // Nueva variable para el código ISBN
+  String category; // Nueva variable para la categoría
 
   BookModel({
     required this.tittle,
@@ -31,25 +33,32 @@ class BookModel {
     required this.registerdate,
     required this.status,
     required this.updatedate,
+    required this.isbn, // Inicialización de la nueva variable
+    required this.category, // Inicialización de la nueva variable
   });
 
   factory BookModel.fromJson(Map<String, dynamic> json, String id) => BookModel(
-  id: id,
-  tittle: json['tittle'] ?? "",  // Cambiamos para asegurarnos de que no sea null
-  autor: json['autor'] ?? "",  // Reemplazamos posibles valores null por ""
-  editorial: json['editorial'] ?? "",
-  gender: json['gender'] ?? "",
-  price: double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,  // Manejo adecuado de valores nulos
-  stock: int.tryParse(json['stock']?.toString() ?? '0') ?? 0,
-  description: json['description'] ?? "",
-  year: int.tryParse(json['year']?.toString() ?? '0') ?? 0,
-  language: json['language'] ?? "",
-  format: json['format'] ?? "",
-  registerdate: DateTime.parse( json['registerdate']),
-  status: json['status'] is String ? int.tryParse(json['status']) ?? 1 : (json['status'] ?? 1),
-  updatedate: DateTime.parse( json['updatedate']),
-);
-
+        id: id,
+        tittle: json['tittle'] ??
+            "", // Cambiamos para asegurarnos de que no sea null
+        autor: json['autor'] ?? "", // Reemplazamos posibles valores null por ""
+        editorial: json['editorial'] ?? "",
+        gender: json['gender'] ?? "",
+        price: double.tryParse(json['price']?.toString() ?? '0') ??
+            0.0, // Manejo adecuado de valores nulos
+        stock: int.tryParse(json['stock']?.toString() ?? '0') ?? 0,
+        description: json['description'] ?? "",
+        year: int.tryParse(json['year']?.toString() ?? '0') ?? 0,
+        language: json['language'] ?? "",
+        format: json['format'] ?? "",
+        registerdate: DateTime.parse(json['registerdate']),
+        status: json['status'] is String
+            ? int.tryParse(json['status']) ?? 1
+            : (json['status'] ?? 1),
+        updatedate: DateTime.parse(json['updatedate']),
+        isbn: json['isbn'] ?? '', // Inicialización de la nueva variable
+        category: json['category'] ?? '', // Inicialización de la nueva variable
+      );
 
   Map<String, dynamic> toJson() {
     return {
@@ -67,6 +76,8 @@ class BookModel {
       'registerdate': registerdate.toIso8601String(),
       'status': status,
       'updatedate': updatedate.toIso8601String(),
+       'isbn': isbn,            // Nueva variable añadida en el JSON
+      'category': category,    // Nueva variable añadida en el JSON
     };
   }
 }
